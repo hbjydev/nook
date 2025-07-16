@@ -27,12 +27,14 @@ type Args struct {
 	Did      string
 	Hostname string
 	DbDsn    string
+	Version  string
 	Logger   *slog.Logger
 }
 
 type config struct {
 	Did      string
 	Hostname string
+	Version  string
 }
 
 type Server struct {
@@ -92,6 +94,10 @@ func New(args Args) (*Server, error) {
 		return nil, errors.New("db dsn must be set")
 	}
 
+	if args.Version == "" {
+		return nil, errors.New("version must be set")
+	}
+
 	if args.Logger == nil {
 		args.Logger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{}))
 	}
@@ -140,7 +146,7 @@ func New(args Args) (*Server, error) {
 
 	gdb, err := gorm.Open(sqlite.New(sqlite.Config{
 		DriverName: "libsql",
-		DSN: args.DbDsn,
+		DSN:        args.DbDsn,
 	}), &gorm.Config{})
 	if err != nil {
 		return nil, err
@@ -156,6 +162,7 @@ func New(args Args) (*Server, error) {
 		config: config{
 			Did:      args.Did,
 			Hostname: args.Hostname,
+			Version:  args.Version,
 		},
 	}
 
@@ -163,11 +170,10 @@ func New(args Args) (*Server, error) {
 }
 
 func (s *Server) setupRoutes() {
-	// Static Routes
+	// General non-interactive stuff
 	s.g.GET("/", s.handleRoot)
 	s.g.GET("/robots.txt", s.handleRobotsTxt)
-
-	// Metadata Routes
+	s.g.GET("/xrpc/_health", s.handleHealth)
 	s.g.GET("/.well-known/did.json", s.handleWellKnown)
 	s.g.GET("/.well-known/oauth-protected-resource", s.handleOauthProtectedResource)
 }
