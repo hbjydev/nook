@@ -1,0 +1,16 @@
+---
+volumes:
+  dbdata:
+
+services:
+  db:
+    image: ghcr.io/tursodatabase/libsql-server
+    volumes:
+      - dbdata:/var/lib/sqld
+    ports:
+      - 8081:8080
+      - 5001:5001
+  redis:
+    image: redis:8
+    ports:
+      - 6379:6379
