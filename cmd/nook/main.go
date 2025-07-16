@@ -52,6 +52,13 @@ var runCmd = &cli.Command{
 			Usage:    "The public-facing hostname Nook is available at",
 			EnvVars:  []string{"NOOK_HOSTNAME"},
 		},
+
+		&cli.StringFlag{
+			Name:     "db-dsn",
+			Required: true,
+			Usage:    "The database connection to use",
+			EnvVars:  []string{"NOOK_DB_DSN"},
+		},
 	},
 
 	Action: func(ctx *cli.Context) error {
@@ -63,6 +70,7 @@ var runCmd = &cli.Command{
 			BindAddr: ctx.String("bind-addr"),
 			Did:      ctx.String("did"),
 			Hostname: ctx.String("hostname"),
+			DbDsn:    ctx.String("db-dsn"),
 		})
 		if err != nil {
 			return err

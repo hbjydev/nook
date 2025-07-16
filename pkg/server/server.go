@@ -8,19 +8,25 @@ import (
 	"os"
 	"time"
 
+	_ "github.com/tursodatabase/libsql-client-go/libsql"
+
 	"github.com/bluesky-social/indigo/atproto/syntax"
 	"github.com/bluesky-social/indigo/util"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
+	"github.com/hbjydev/nook/internal/db"
 	sloggin "github.com/samber/slog-gin"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 type Args struct {
 	BindAddr string
 	Did      string
 	Hostname string
+	DbDsn    string
 	Logger   *slog.Logger
 }
 
@@ -35,7 +41,8 @@ type Server struct {
 	http  *http.Client
 	httpd *http.Server
 
-	g *gin.Engine
+	g  *gin.Engine
+	db *db.DB
 
 	config config
 }
@@ -79,6 +86,10 @@ func New(args Args) (*Server, error) {
 
 	if args.Hostname == "" {
 		return nil, errors.New("hostname must be set")
+	}
+
+	if args.DbDsn == "" {
+		return nil, errors.New("db dsn must be set")
 	}
 
 	if args.Logger == nil {
@@ -127,11 +138,21 @@ func New(args Args) (*Server, error) {
 		IdleTimeout:  5 * time.Minute,
 	}
 
+	gdb, err := gorm.Open(sqlite.New(sqlite.Config{
+		DriverName: "libsql",
+		DSN: args.DbDsn,
+	}), &gorm.Config{})
+	if err != nil {
+		return nil, err
+	}
+	dbw := db.New(gdb)
+
 	srv := &Server{
 		logger: args.Logger,
 		http:   util.RobustHTTPClient(),
 		httpd:  httpd,
 		g:      g,
+		db:     dbw,
 		config: config{
 			Did:      args.Did,
 			Hostname: args.Hostname,
