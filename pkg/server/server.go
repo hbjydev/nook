@@ -8,8 +8,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/bluesky-social/indigo/atproto/syntax"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	sloggin "github.com/samber/slog-gin"
 )
 
@@ -36,13 +39,41 @@ type Server struct {
 	config config
 }
 
+type CustomValidator struct {
+	validator *validator.Validate
+}
+
+type ValidationError struct {
+	error
+	Field string
+	Tag   string
+}
+
+func (cv *CustomValidator) Validate(i any) error {
+	if err := cv.validator.Struct(i); err != nil {
+		var validateErrors validator.ValidationErrors
+		if errors.As(err, &validateErrors) && len(validateErrors) > 0 {
+			first := validateErrors[0]
+			return ValidationError{
+				error: err,
+				Field: first.Field(),
+				Tag:   first.Tag(),
+			}
+		}
+
+		return err
+	}
+
+	return nil
+}
+
 func New(args Args) (*Server, error) {
 	if args.BindAddr == "" {
 		return nil, errors.New("bind-addr must be set")
 	}
 
-	if args.Did == "" {
-		return nil, errors.New("did must be set")
+	if _, err := syntax.ParseDID(args.Did); err != nil {
+		return nil, errors.New("did must be set and valid")
 	}
 
 	if args.Hostname == "" {
@@ -57,6 +88,33 @@ func New(args Args) (*Server, error) {
 	g.Use(sloggin.New(args.Logger.WithGroup("http")))
 	g.Use(gin.Recovery())
 	g.Use(cors.Default())
+
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		v.RegisterValidation("atproto-handle", func(fl validator.FieldLevel) bool {
+			if _, err := syntax.ParseHandle(fl.Field().String()); err != nil {
+				return false
+			}
+			return true
+		})
+		v.RegisterValidation("atproto-did", func(fl validator.FieldLevel) bool {
+			if _, err := syntax.ParseDID(fl.Field().String()); err != nil {
+				return false
+			}
+			return true
+		})
+		v.RegisterValidation("atproto-rkey", func(fl validator.FieldLevel) bool {
+			if _, err := syntax.ParseRecordKey(fl.Field().String()); err != nil {
+				return false
+			}
+			return true
+		})
+		v.RegisterValidation("atproto-nsid", func(fl validator.FieldLevel) bool {
+			if _, err := syntax.ParseNSID(fl.Field().String()); err != nil {
+				return false
+			}
+			return true
+		})
+	}
 
 	httpd := &http.Server{
 		Addr:    args.BindAddr,
