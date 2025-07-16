@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bluesky-social/indigo/atproto/syntax"
+	"github.com/bluesky-social/indigo/util"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -128,7 +129,7 @@ func New(args Args) (*Server, error) {
 
 	srv := &Server{
 		logger: args.Logger,
-		http:   http.DefaultClient,
+		http:   util.RobustHTTPClient(),
 		httpd:  httpd,
 		g:      g,
 		config: config{
