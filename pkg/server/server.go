@@ -66,7 +66,14 @@ func New(args Args) (*Server, error) {
 	return srv, nil
 }
 
+func (s *Server) setupRoutes() {
+	s.g.GET("/", s.handleRoot)
+}
+
 func (s *Server) Run(ctx context.Context) error {
+	s.logger.Info("mounting routes...")
+	s.setupRoutes()
+
 	s.logger.Info("starting nook")
 
 	go func() {
