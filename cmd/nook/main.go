@@ -65,7 +65,8 @@ var runCmd = &cli.Command{
 		logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{}))
 
 		srv, err := server.New(server.Args{
-			Logger: logger,
+			Version: Version,
+			Logger:  logger,
 
 			BindAddr: ctx.String("bind-addr"),
 			Did:      ctx.String("did"),
