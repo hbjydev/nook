@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 
+	"github.com/hbjydev/nook/pkg/server"
 	"github.com/urfave/cli/v2"
 )
 
@@ -39,6 +41,16 @@ var runCmd = &cli.Command{
 	},
 
 	Action: func(ctx *cli.Context) error {
-		return nil
+		logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{}))
+
+		srv, err := server.New(server.Args{
+			BindAddr: ctx.String("bind-addr"),
+			Logger: logger,
+		})
+		if err != nil {
+			return err
+		}
+
+		return srv.Run(ctx.Context)
 	},
 }
