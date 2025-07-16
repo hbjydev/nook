@@ -68,6 +68,7 @@ func New(args Args) (*Server, error) {
 
 func (s *Server) setupRoutes() {
 	s.g.GET("/", s.handleRoot)
+	s.g.GET("/robots.txt", s.handleRobotsTxt)
 }
 
 func (s *Server) Run(ctx context.Context) error {
