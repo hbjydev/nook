@@ -176,6 +176,9 @@ func (s *Server) setupRoutes() {
 	s.g.GET("/xrpc/_health", s.handleHealth)
 	s.g.GET("/.well-known/did.json", s.handleWellKnown)
 	s.g.GET("/.well-known/oauth-protected-resource", s.handleOauthProtectedResource)
+
+	// Public routes
+	s.g.GET("/xrpc/com.atproto.identity.resolveHandle", s.handleIdentityResolveHandle)
 }
 
 func (s *Server) Run(ctx context.Context) error {

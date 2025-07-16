@@ -3,6 +3,7 @@ module github.com/hbjydev/nook
 go 1.24.4
 
 require (
+	github.com/Azure/go-autorest/autorest/to v0.4.1
 	github.com/bluesky-social/indigo v0.0.0-20250716175339-eebba3d96129
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.10.1
@@ -15,6 +16,7 @@ require (
 )
 
 require (
+	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/bytedance/sonic v1.13.3 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
