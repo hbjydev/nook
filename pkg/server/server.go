@@ -89,6 +89,7 @@ func (s *Server) setupRoutes() {
 
 	// Metadata Routes
 	s.g.GET("/.well-known/did.json", s.handleWellKnown)
+	s.g.GET("/.well-known/oauth-protected-resource", s.handleOauthProtectedResource)
 }
 
 func (s *Server) Run(ctx context.Context) error {
