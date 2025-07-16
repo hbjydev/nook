@@ -38,14 +38,31 @@ var runCmd = &cli.Command{
 			DefaultText: ":8080",
 			EnvVars:     []string{"NOOK_BIND_ADDR"},
 		},
+
+		&cli.StringFlag{
+			Name:     "did",
+			Required: true,
+			Usage:    "The DID this Nook serves.",
+			EnvVars:  []string{"NOOK_DID"},
+		},
+
+		&cli.StringFlag{
+			Name:     "hostname",
+			Required: true,
+			Usage:    "The public-facing hostname Nook is available at",
+			EnvVars:  []string{"NOOK_HOSTNAME"},
+		},
 	},
 
 	Action: func(ctx *cli.Context) error {
 		logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{}))
 
 		srv, err := server.New(server.Args{
-			BindAddr: ctx.String("bind-addr"),
 			Logger: logger,
+
+			BindAddr: ctx.String("bind-addr"),
+			Did:      ctx.String("did"),
+			Hostname: ctx.String("hostname"),
 		})
 		if err != nil {
 			return err
