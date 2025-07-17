@@ -5,7 +5,6 @@ import (
 	"github.com/bluesky-social/indigo/atproto/syntax"
 	"github.com/gin-gonic/gin"
 	"github.com/hbjydev/nook/internal/helpers"
-	"github.com/hbjydev/nook/pkg/identity"
 )
 
 func (s *Server) handleIdentityResolveHandle(c *gin.Context) {
@@ -25,7 +24,7 @@ func (s *Server) handleIdentityResolveHandle(c *gin.Context) {
 		return
 	}
 
-	did, err := identity.ResolveHandle(c.Request.Context(), s.http, parsed.String())
+	did, err := s.passport.ResolveHandle(c.Request.Context(), parsed.String())
 	if err != nil {
 		s.logger.Error("error resolving handle", "error", err)
 		helpers.ServerError(c, nil)

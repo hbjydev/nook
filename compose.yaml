@@ -14,3 +14,11 @@ services:
     image: redis:8
     ports:
       - 6379:6379
+  redisinsight:
+    image: redis/redisinsight
+    environment:
+      RI_REDIS_HOST0: redis
+      RI_REDIS_PORT0: redis
+      RI_REDIS_ALIAS0: cache
+    ports:
+      - 5540:5540

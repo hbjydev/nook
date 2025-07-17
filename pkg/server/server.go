@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 
 	"github.com/bluesky-social/indigo/atproto/syntax"
@@ -17,18 +18,21 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	"github.com/hbjydev/nook/internal/db"
+	"github.com/hbjydev/nook/pkg/identity"
 	sloggin "github.com/samber/slog-gin"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
 type Args struct {
-	BindAddr string
-	Did      string
-	Hostname string
-	DbDsn    string
-	Version  string
-	Logger   *slog.Logger
+	BindAddr  string
+	Did       string
+	Hostname  string
+	DbDsn     string
+	RedisHost string
+	RedisDB   int
+	Version   string
+	Logger    *slog.Logger
 }
 
 type config struct {
@@ -45,6 +49,9 @@ type Server struct {
 
 	g  *gin.Engine
 	db *db.DB
+
+	passport *identity.Passport
+	red      *redis.Client
 
 	config config
 }
@@ -91,7 +98,11 @@ func New(args Args) (*Server, error) {
 	}
 
 	if args.DbDsn == "" {
-		return nil, errors.New("db dsn must be set")
+		return nil, errors.New("db-dsn must be set")
+	}
+
+	if args.RedisHost == "" {
+		return nil, errors.New("redis-host must be set")
 	}
 
 	if args.Version == "" {
@@ -134,6 +145,8 @@ func New(args Args) (*Server, error) {
 		})
 	}
 
+	httpc := util.RobustHTTPClient()
+
 	httpd := &http.Server{
 		Addr:    args.BindAddr,
 		Handler: g.Handler(),
@@ -153,12 +166,25 @@ func New(args Args) (*Server, error) {
 	}
 	dbw := db.New(gdb)
 
+	red := redis.NewClient(&redis.Options{
+		Addr: args.RedisHost,
+		DB:   args.RedisDB,
+	})
+
+	passport := identity.NewPassport(
+		httpc,
+		red,
+		args.Logger.WithGroup("passport"),
+	)
+
 	srv := &Server{
-		logger: args.Logger,
-		http:   util.RobustHTTPClient(),
-		httpd:  httpd,
-		g:      g,
-		db:     dbw,
+		logger:   args.Logger,
+		http:     httpc,
+		httpd:    httpd,
+		g:        g,
+		db:       dbw,
+		red:      red,
+		passport: passport,
 		config: config{
 			Did:      args.Did,
 			Hostname: args.Hostname,

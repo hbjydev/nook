@@ -59,6 +59,21 @@ var runCmd = &cli.Command{
 			Usage:    "The database connection to use",
 			EnvVars:  []string{"NOOK_DB_DSN"},
 		},
+
+		&cli.StringFlag{
+			Name:     "redis-host",
+			Required: true,
+			Usage:    "The redis host to connect to",
+			EnvVars:  []string{"NOOK_REDIS_HOST"},
+		},
+
+		&cli.IntFlag{
+			Name:        "redis-db",
+			Value:       0,
+			Usage:       "The redis db to use",
+			DefaultText: "0",
+			EnvVars:     []string{"NOOK_REDIS_DB"},
+		},
 	},
 
 	Action: func(ctx *cli.Context) error {
@@ -68,10 +83,12 @@ var runCmd = &cli.Command{
 			Version: Version,
 			Logger:  logger,
 
-			BindAddr: ctx.String("bind-addr"),
-			Did:      ctx.String("did"),
-			Hostname: ctx.String("hostname"),
-			DbDsn:    ctx.String("db-dsn"),
+			BindAddr:  ctx.String("bind-addr"),
+			Did:       ctx.String("did"),
+			Hostname:  ctx.String("hostname"),
+			DbDsn:     ctx.String("db-dsn"),
+			RedisHost: ctx.String("redis-host"),
+			RedisDB:   ctx.Int("redis-db"),
 		})
 		if err != nil {
 			return err

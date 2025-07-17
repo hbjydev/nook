@@ -2,6 +2,7 @@ package identity
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -67,11 +68,49 @@ func ResolveHandle(ctx context.Context, cli *http.Client, handle string) (string
 		maybeDid := string(b)
 
 		if _, err := syntax.ParseDID(maybeDid); err != nil {
-			return "", fmt.Errorf("unabgle to resolve handle")
+			return "", fmt.Errorf("unable to resolve handle")
 		}
 
 		did = maybeDid
 	}
 
 	return did, nil
+}
+
+func FetchDidDoc(ctx context.Context, cli *http.Client, did string) (*DidDoc, error) {
+	if cli == nil {
+		cli = util.RobustHTTPClient()
+	}
+
+	var ustr string
+	if strings.HasPrefix(did, "did:plc:") {
+		ustr = fmt.Sprintf("https://plc.directory/%s", did)
+	} else if strings.HasPrefix(did, "did:web:") {
+		ustr = fmt.Sprintf("https://%s/.well-known/did.json", strings.TrimPrefix(did, "did:web:"))
+	} else {
+		return nil, fmt.Errorf("did was not a supported type, must be: did:web or did:plc")
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", ustr, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := cli.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		io.Copy(io.Discard, resp.Body)
+		return nil, fmt.Errorf("could not find did document")
+	}
+
+	var didDoc DidDoc
+	if err := json.NewDecoder(resp.Body).Decode(&didDoc); err != nil {
+		return nil, err
+	}
+
+	return &didDoc, nil
 }
