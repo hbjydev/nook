@@ -1,18 +1,19 @@
 package server
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/hbjydev/nook/pkg/identity"
+)
 
 func (s *Server) handleWellKnown(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"@context": []string{
-			"https://www.w3.org/ns/did/v1",
-		},
-		"id": s.config.Did,
-		"service": []gin.H{
+	c.JSON(200, identity.DidDoc{
+		Context: []string{"https://www.w3.org/ns/did/v1"},
+		Id: s.config.Did,
+		Service: []identity.DidDocService{
 			{
-				"id":              "#atproto_pds",
-				"type":            "AtprotoPersonalDataServer",
-				"serviceEndpoint": "https://" + s.config.Hostname,
+				Id: "#atproto_pds",
+				Type: "AtprotoPersonalDataServer",
+				ServiceEndpoint: "https://" + s.config.Hostname,
 			},
 		},
 	})
